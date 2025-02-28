@@ -25,7 +25,7 @@
   "author": "SeaLoong <sealoongw@foxmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SeaLoong/os-encoding.git"
+    "url": "git+https://github.com/SeaLoong/os-encoding.git"
   },
   "license": "MIT",
   "devDependencies": {
