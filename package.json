@@ -1,0 +1,36 @@
+{
+  "name": "os-encoding",
+  "version": "0.0.1",
+  "description": "Get the system's default character encoding.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "typings": "index.d.ts",
+  "homepage": "https://github.com/SeaLoong/os-encoding",
+  "bugs": "https://github.com/SeaLoong/os-encoding/issues",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "init": "yarn --frozen-lockfile",
+    "test": "mocha test/**/*.test.js"
+  },
+  "keywords": [
+    "os",
+    "encoding",
+    "charset",
+    "locale",
+    "cross-platform"
+  ],
+  "author": "SeaLoong <sealoongw@foxmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SeaLoong/os-encoding.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "mocha": "^11.1.0"
+  },
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+}
