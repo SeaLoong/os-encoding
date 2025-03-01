@@ -23,10 +23,7 @@
     "cross-platform"
   ],
   "author": "SeaLoong <sealoongw@foxmail.com>",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/SeaLoong/os-encoding.git"
-  },
+  "repository": "github:SeaLoong/os-encoding",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.13.5",
