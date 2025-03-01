@@ -1,10 +1,13 @@
 # os-encoding
 
 [![NPM](https://nodei.co/npm/os-encoding.png?downloads=true)](https://nodei.co/npm/os-encoding/)
+
 [![NPM Version](https://img.shields.io/npm/v/os-encoding)](https://www.npmjs.com/package/os-encoding) [![NPM Downloads](https://img.shields.io/npm/dm/os-encoding)](https://www.npmjs.com/package/os-encoding)
+
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SeaLoong/os-encoding/npm-publish.yml?label=publish)](https://github.com/SeaLoong/os-encoding/actions/workflows/npm-publish.yml) [![GitHub Release](https://img.shields.io/github/v/release/SeaLoong/os-encoding)](https://github.com/SeaLoong/os-encoding/releases) [![GitHub Repo stars](https://img.shields.io/github/stars/SeaLoong/os-encoding)](https://github.com/SeaLoong/os-encoding)
 
-A cross-platform Node.js library to get the system's default character encoding.  
+A cross-platform Node.js library to get the system's default character encoding.
+
 Supports **Windows**, **macOS**, and **Linux**.
 
 ## Installation
@@ -72,3 +75,5 @@ Returns the encoding name directly as reported by the OS or environment.
 ## License
 
 [![GitHub License](https://img.shields.io/github/license/SeaLoong/os-encoding)](https://github.com/SeaLoong/os-encoding/blob/master/LICENSE)
+
+Copyright © 2025 SeaLoong
