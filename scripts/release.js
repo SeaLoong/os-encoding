@@ -54,7 +54,7 @@ async function main() {
 
     execSync('git add package.json');
     execSync(`git commit -m "chore: release v${newVersion}" --allow-empty`);
-    execSync(`git tag v${newVersion}`);
+    execSync(`git tag -a v${newVersion} -m "Version ${newVersion}"`);
     execSync('git push --follow-tags');
 
     console.log(`\n✅ Successfully released version v${newVersion}!`);
