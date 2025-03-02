@@ -53,7 +53,7 @@ async function main() {
     await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 
     execSync('git add package.json');
-    execSync(`git commit -m "chore: release v${newVersion}"`);
+    execSync(`git commit -m "chore: release v${newVersion}" --allow-empty`);
     execSync(`git tag v${newVersion}`);
     execSync('git push --follow-tags');
 
