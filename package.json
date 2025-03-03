@@ -9,7 +9,8 @@
   "bugs": "https://github.com/SeaLoong/os-encoding/issues",
   "files": [
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "src"
   ],
   "scripts": {
     "init": "yarn --frozen-lockfile",

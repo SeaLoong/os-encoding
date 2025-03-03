@@ -1,4 +1,5 @@
 const child_process = require('child_process');
+const CODE_PAGE_MAP = require('./src/codepage');
 
 /**
  * Detects the system's default character encoding.
@@ -18,7 +19,7 @@ function osEncoding(envOnly = false) {
           .execSync('chcp')
           .toString()
           .match(/:\s*(\d+)/)?.[1];
-        encoding = mapWindowsCodePageToEncoding(codePage);
+        encoding = CODE_PAGE_MAP[codePage];
       } else {
         // macOS/Linux: Detect via `locale` command
         lang =
@@ -34,21 +35,6 @@ function osEncoding(envOnly = false) {
   } catch (e) {
     return 'UTF-8'; // Fallback
   }
-}
-
-const CODE_PAGE_MAP = {
-  65001: 'UTF-8', // Unicode (UTF-8)
-  932: 'Shift_JIS', // Japanese
-  936: 'GBK', // Simplified Chinese
-  949: 'EUC-KR', // Korean
-  950: 'Big5', // Traditional Chinese
-  1252: 'Windows-1252', // Western European
-};
-/**
- * Maps Windows code pages to encoding names with original casing.
- */
-function mapWindowsCodePageToEncoding(codePage) {
-  return CODE_PAGE_MAP[codePage] || 'UTF-8';
 }
 
 module.exports = osEncoding;
