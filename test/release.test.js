@@ -1,3 +1,4 @@
+const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('assert');
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -7,9 +8,7 @@ const vm = require('vm');
 
 const releaseScript = fs.readFileSync(path.join(__dirname, '../scripts/release.js'), 'utf8');
 
-describe('release script', function () {
-  this.timeout(30000);
-
+describe('release script', () => {
   let root;
   let repository;
   let remote;
@@ -90,7 +89,7 @@ describe('release script', function () {
   }
 
   for (const version of ['0.0.5', '0.0.4', 'v0.0.6', '0.0.6+build', 'not-a-version']) {
-    it(`rejects ${version} before changing files or commits`, async () => {
+    it(`rejects ${version} before changing files or commits`, { timeout: 30000 }, async () => {
       const head = git(['rev-parse', 'HEAD']);
       const result = await runRelease(version);
       assert.strictEqual(result.exitCode, 1, result.messages);
@@ -98,7 +97,7 @@ describe('release script', function () {
     });
   }
 
-  it('rejects an existing local tag before changing files or commits', async () => {
+  it('rejects an existing local tag before changing files or commits', { timeout: 30000 }, async () => {
     git(['tag', 'v0.0.6']);
     const head = git(['rev-parse', 'HEAD']);
     const result = await runRelease('0.0.6');
@@ -106,7 +105,7 @@ describe('release script', function () {
     assertUnchanged(head);
   });
 
-  it('rejects an existing remote tag before changing files or commits', async () => {
+  it('rejects an existing remote tag before changing files or commits', { timeout: 30000 }, async () => {
     git(['tag', 'v0.0.6']);
     git(['push', 'origin', 'refs/tags/v0.0.6']);
     git(['tag', '--delete', 'v0.0.6']);
@@ -116,7 +115,7 @@ describe('release script', function () {
     assertUnchanged(head);
   });
 
-  it('rejects a branch without an upstream before changing files or commits', async () => {
+  it('rejects a branch without an upstream before changing files or commits', { timeout: 30000 }, async () => {
     git(['branch', '--unset-upstream']);
     const head = git(['rev-parse', 'HEAD']);
     const result = await runRelease('0.0.6');
@@ -124,7 +123,7 @@ describe('release script', function () {
     assertUnchanged(head);
   });
 
-  it('rejects remote commits missing locally before changing files or commits', async () => {
+  it('rejects remote commits missing locally before changing files or commits', { timeout: 30000 }, async () => {
     const head = git(['rev-parse', 'HEAD']);
     git(['commit', '--allow-empty', '-m', 'Remote change']);
     git(['push', 'origin', 'main']);
@@ -134,7 +133,7 @@ describe('release script', function () {
     assertUnchanged(head);
   });
 
-  it('allows local commits and pushes only the release tag with the branch', async () => {
+  it('allows local commits and pushes only the release tag with the branch', { timeout: 30000 }, async () => {
     git(['commit', '--allow-empty', '-m', 'Local change']);
     git(['tag', '-a', 'v99.0.0', '-m', 'Unrelated local tag']);
     const result = await runRelease('0.0.6');

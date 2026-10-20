@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "init": "yarn --frozen-lockfile",
-    "test": "mocha test/**/*.test.js",
+    "test": "node --test",
     "release": "node scripts/release.js"
   },
   "keywords": [
@@ -31,9 +31,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.13.5",
-    "mocha": "^11.1.0",
-    "semver": "^7.7.1"
+    "semver": "^7.8.5"
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }
