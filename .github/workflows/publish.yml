@@ -5,99 +5,98 @@ on:
     tags:
       - 'v*'
 
-permissions: write-all
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    outputs:
-      status: ${{ steps.run_tests.outputs.status }}
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
 
-      - name: Get Yarn cache path
-        id: yarn-cache-dir
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Yarn dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ steps.yarn-cache-dir.outputs.dir }}
-            node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node -e "const expected = 'v' + require('./package.json').version; if (process.env.RELEASE_TAG !== expected) { throw new Error('Release tag must be ' + expected); }"
 
       - name: Install dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn --frozen-lockfile
 
-      - name: Run Tests
-        id: run_tests
-        run: |
-          if yarn test; then
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+      - name: Run tests
+        run: yarn test
 
-  release:
-    needs: test
-    if: needs.test.outputs.status == 'success'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create ${{ github.ref_name }} --generate-notes
+      - name: Check package contents
+        run: npm pack --dry-run
 
   publish:
     needs: test
-    if: needs.test.outputs.status == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 24
+          package-manager-cache: false
 
-      - name: Publish to NPM
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Install npm with trusted publishing support
+        run: |
+          npm install --global npm@11 --registry=https://registry.npmjs.org
+          npm --version
 
-  delete_tag:
-    needs: test
-    if: needs.test.outputs.status == 'failure'
+      - name: Publish to npm with OIDC
+        run: |
+          DIST_TAG=$(node -p "require('./package.json').version.includes('-') ? 'next' : 'latest'")
+          npm publish --tag "$DIST_TAG" --registry=https://registry.npmjs.org
+
+  release:
+    needs: publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Delete Tag
+      - name: Create GitHub Release
         env:
-          PAT: ${{ secrets.ACTIONS_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:$PAT@github.com/${{ github.repository }}.git
-          git push origin :refs/tags/${{ github.ref_name }}
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "GitHub Release already exists for $RELEASE_TAG"
+          else
+            args=(--verify-tag --generate-notes)
+            if [[ "$RELEASE_TAG" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh release create "$RELEASE_TAG" "${args[@]}"
+          fi

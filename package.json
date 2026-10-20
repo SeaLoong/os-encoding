@@ -1,7 +1,7 @@
 {
   "name": "os-encoding",
-  "version": "0.0.5",
-  "description": "Get the system's default character encoding.",
+  "version": "0.0.6",
+  "description": "Detect the locale or Windows console character encoding.",
   "main": "index.js",
   "types": "index.d.ts",
   "typings": "index.d.ts",
@@ -25,7 +25,10 @@
     "cross-platform"
   ],
   "author": "SeaLoong <sealoongw@foxmail.com>",
-  "repository": "github:SeaLoong/os-encoding",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeaLoong/os-encoding.git"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.13.5",
