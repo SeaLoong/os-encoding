@@ -1,10 +1,10 @@
 /**
  * Maps Windows code pages to encoding names.
- * @see https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
+ * @see https://learn.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
  * @see https://www.iana.org/assignments/character-sets/character-sets.xhtml
  */
 module.exports = {
-  '037': 'IBM037',
+  '37': 'IBM037',
   '437': 'IBM437', // IANA
   '500': 'IBM500',
   '708': 'ISO-8859-6', // IANA, ASMO-708
@@ -26,6 +26,7 @@ module.exports = {
   '865': 'IBM865', // IANA
   '866': 'IBM866', // IANA
   '869': 'IBM869', // IANA
+  '870': 'IBM870', // IANA
   '874': 'windows-874', // IANA
   '875': 'cp875',
   '932': 'Shift_JIS', // IANA
@@ -33,6 +34,7 @@ module.exports = {
   '949': 'EUC-KR', // IANA, ISO-2022-KR, KS_C_5601-1987
   '950': 'Big5', // IANA
   '1026': 'IBM1026', // IANA
+  '1047': 'IBM1047', // IANA
   '1140': 'IBM01140', // IANA
   '1141': 'IBM01141', // IANA
   '1142': 'IBM01142', // IANA
@@ -121,9 +123,11 @@ module.exports = {
   '28599': 'ISO-8859-9', // IANA
   '28603': 'ISO-8859-13', // IANA
   '28605': 'ISO-8859-15', // IANA
+  '29001': 'x-Europa',
   '38598': 'ISO-8859-8-I', // IANA
   '50220': 'ISO-2022-JP', // IANA
   '50221': 'ISO-2022-JP', // IANA
+  '50222': 'ISO-2022-JP', // IANA
   '50225': 'ISO-2022-KR', // IANA
   '50227': 'ISO-2022-CN', // x-cp50227
   '50229': '',

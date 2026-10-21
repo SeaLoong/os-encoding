@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/os-encoding)](https://www.npmjs.com/package/os-encoding) [![NPM Downloads](https://img.shields.io/npm/dm/os-encoding)](https://www.npmjs.com/package/os-encoding) [![Tests](https://img.shields.io/github/actions/workflow/status/SeaLoong/os-encoding/test.yml?label=tests)](https://github.com/SeaLoong/os-encoding/actions/workflows/test.yml)
 
-A small, synchronous Node.js library that detects an encoding label from the current process's locale or Windows console. Supports Windows, macOS, and Linux, with no runtime dependencies.
+Detect the character encoding used by the current process's locale or Windows console. Supports Windows, macOS, and Linux, with no runtime dependencies. TypeScript declarations are included.
 
 ## Installation
 
@@ -17,10 +17,8 @@ CommonJS:
 ```js
 const osEncoding = require('os-encoding');
 
-const encoding = osEncoding(); // For example: 'UTF-8', 'GBK', or 'Shift_JIS'
-console.log(encoding);
-
-const envEncoding = osEncoding(true); // Environment variables only; never runs a command
+const encoding = osEncoding();
+console.log(encoding); // For example: 'UTF-8', 'GBK', or 'Shift_JIS'
 ```
 
 ES modules:
@@ -31,60 +29,91 @@ import osEncoding from 'os-encoding';
 console.log(osEncoding());
 ```
 
-TypeScript declarations are included.
+TypeScript with CommonJS:
+
+```ts
+import osEncoding = require('os-encoding');
+
+const encoding: string = osEncoding();
+```
+
+To inspect environment variables without running a command:
+
+```js
+const encoding = osEncoding(true);
+```
+
+The result is an encoding label for use with a compatible text decoder. The library reads system settings; it does not inspect file contents or identify the language of text.
 
 ## API
 
 ### `osEncoding(envOnly?: boolean): string`
 
-Returns an encoding label. `envOnly` defaults to `false`.
+Returns an encoding label, or `UTF-8` when detection is unavailable. `envOnly` defaults to `false`.
 
-Detection follows these steps on every call:
+| Argument | Behavior |
+| --- | --- |
+| `false` or omitted | Read the locale environment variables, then query the platform if needed. |
+| `true` | Read only the locale environment variables; return `UTF-8` if they do not identify an encoding. |
 
-1. Select the first nonempty locale variable: **`LC_ALL` → `LC_CTYPE` → `LANG`**, following [POSIX locale precedence](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html).
-2. If that value contains a `.codeset` suffix, return the codeset, preserving its casing and removing any `@modifier`. For example, `de_DE.ISO-8859-1@euro` returns `ISO-8859-1`.
-3. If `envOnly` is `true`, return `UTF-8`.
-4. Otherwise, run the platform command below and return its result.
-5. Return `UTF-8` if the command fails, its output is invalid, or a Windows code page is unknown.
+The first nonempty variable in **`LC_ALL` → `LC_CTYPE` → `LANG`** order selects the character locale, following [POSIX locale precedence](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html). A higher priority variable takes precedence even when it contains no encoding.
 
-| Platform | Command fallback | Example result |
+Supported locale forms include:
+
+- Named codesets: `ja_JP.EUC-JP` returns `EUC-JP`. A modifier such as `@euro` is ignored.
+- Numeric Windows code pages: `Russian_Russia.1251` and `.1251` return `windows-1251`. Leading zeros are accepted.
+- UTF-8 values: `en_US.utf8`, `.UTF8`, and standalone `UTF-8` are recognized.
+
+Named codesets preserve their spelling and case: `en_US.utf8` returns `utf8`. Numeric code pages are mapped to encoding names: `.65001` returns `UTF-8`. Explicit codesets are recognized on all supported platforms.
+
+When the selected locale does not identify an encoding, default mode uses the following fallback:
+
+| Platform | Query | Example result |
 | --- | --- | --- |
-| Windows | `chcp`, mapped to an encoding label | `GBK` for code page 936 |
-| macOS / Linux | `locale charmap` | `UTF-8` |
+| Windows | Active console code page, using `chcp` | `GBK` for code page 936 |
+| macOS / Linux | Character locale codeset, using `locale charmap` | `UTF-8` |
 
-A higher priority locale variable takes precedence even when it has no explicit codeset. For example, with `LC_ALL=C` and `LANG=en_US.UTF-8`, default mode asks the platform command; environment-only mode returns the `UTF-8` fallback. The charset of `C`, `POSIX`, and other locale names without a codeset is determined by the platform command.
+If the platform query fails, returns invalid output, or reports an unknown Windows code page, the result is `UTF-8`.
 
-### Semantics and performance
+## Locale examples
 
-On Windows, [`chcp` reports the active console code page](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/chcp). This can differ from the Windows ANSI code page used by legacy applications. Locale environment variables take precedence on Windows too.
+These are example values of the selected locale variable and the labels returned by `osEncoding(true)`:
 
-Encoding labels are not normalized: `en_US.utf8` returns `utf8`, while code page 65001 returns `UTF-8`. Choose a decoder that accepts the returned label when converting bytes to text. The `UTF-8` fallback is a default when detection is unavailable.
+| Locale value | Result |
+| --- | --- |
+| `zh_CN.GB18030` | `GB18030` |
+| `Chinese_China.936` | `GBK` |
+| `zh_TW.Big5` | `Big5` |
+| `ja_JP.EUC-JP` | `EUC-JP` |
+| `Japanese_Japan.932` | `Shift_JIS` |
+| `ko_KR.EUC-KR` | `EUC-KR` |
+| `Russian_Russia.1251` | `windows-1251` |
+| `uk_UA.KOI8-U` | `KOI8-U` |
+| `Greek_Greece.1253` | `windows-1253` |
+| `Arabic_Saudi Arabia.1256` | `windows-1256` |
+| `he_IL.ISO-8859-8` | `ISO-8859-8` |
+| `tr_TR.ISO-8859-9` | `ISO-8859-9` |
+| `Vietnamese_Vietnam.1258` | `windows-1258` |
+| `Thai_Thailand.874` | `windows-874` |
+| `de_DE.ISO-8859-15@euro` | `ISO-8859-15` |
+| `.65001` | `UTF-8` |
+| `UTF-8` | `UTF-8` |
 
-The function is synchronous and reads the current environment on each call. Command fallbacks block the event loop and have a one second timeout. Use `osEncoding(true)` when commands should be skipped, or call once at startup and reuse the result in performance sensitive code.
+Other explicit named codesets are accepted too. A language or country alone does not determine an encoding: for example, `zh_CN` may use different codesets on different systems. Default mode asks the platform for such locales; environment-only mode returns `UTF-8`.
 
-## Development
+## Behavior notes
 
-Install dependencies with Yarn Classic using the committed lockfile, then run the tests:
+- **Locale precedence:** with `LC_ALL=C` and `LANG=zh_CN.GBK`, default mode queries the platform. `osEncoding(true)` returns the `UTF-8` fallback; it does not use the lower priority `LANG` value. The same rule applies to `POSIX`, unknown numeric code pages, and malformed codesets.
+- **Windows console:** [`chcp` reports the active console code page](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/chcp), which may differ from the encoding used by a legacy application. Locale environment variables take precedence on Windows too.
+- **Decoder compatibility:** returned labels are not checked against a particular decoder's supported encodings. Use a decoder that accepts the returned label. The fallback `UTF-8` is a default, not proof of the encoding of arbitrary bytes.
+- **Synchronous calls:** each call reads the current environment. Platform queries block the event loop and have a one-second timeout. Use `osEncoding(true)` to skip commands, or detect once at startup and reuse the result.
 
-```sh
-yarn --frozen-lockfile
-yarn test
-npm pack --dry-run
-```
+## References
 
-The tests cover locale precedence, parsing, platform commands, and fallback behavior with stubs, plus smoke checks against the host platform. CI runs on Windows, macOS, and Linux with Node.js 22 and 24.
-
-## Releasing
-
-Maintainers publish through the tag-triggered [publish workflow](.github/workflows/publish.yml):
-
-1. Commit changes, run the checks above, and incorporate any upstream commits. The release script requires a clean working tree and a branch with an upstream; it accepts local commits ahead of upstream, and rejects a branch that is behind or has diverged.
-2. Run `yarn release` and choose a new version at the prompts. The script updates `package.json`, commits it, creates an annotated `v<version>` tag, and atomically pushes the current branch and that tag.
-3. Check [GitHub Actions](https://github.com/SeaLoong/os-encoding/actions/workflows/publish.yml). The workflow verifies the tag matches `package.json`, runs tests on all supported platforms, publishes to npm, and then creates the GitHub Release. Stable versions use the npm `latest` tag; prerelease versions use `next` and a GitHub prerelease.
-
-The npm package's Trusted Publisher must point to `SeaLoong/os-encoding` and workflow filename `publish.yml`, allow `npm publish`, and leave Environment name empty. The publish job uses GitHub Actions OIDC with `id-token: write`; an npm token is not required. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) for setup.
-
-A successful release script run means the tag was pushed; check the workflow to confirm npm publication. If a local commit, tag, or push step fails, inspect the retained local state before retrying. The workflow preserves the tag on failure. Correct registry permissions or network issues and rerun failed jobs for that tag; changes to tagged source or workflow require a new version and tag. Published npm versions are immutable.
+- [POSIX locale environment variables](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap08.html) — locale selection and precedence.
+- [Windows locale and code page syntax](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/setlocale-wsetlocale) — forms such as `French_Canada.1252` and `.UTF8`.
+- [Windows code page identifiers](https://learn.microsoft.com/en-us/windows/win32/intl/code-page-identifiers) — code page numbers and their encoding names.
+- [IANA character set registry](https://www.iana.org/assignments/character-sets/character-sets.xhtml) — registered encoding names and aliases.
 
 ## License
 

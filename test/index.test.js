@@ -47,6 +47,78 @@ describe('osEncoding', () => {
       });
     }
 
+    for (const [locale, encoding] of [
+      ['zh_CN.936', 'GBK'],
+      ['zh_TW.950', 'Big5'],
+      ['ja_JP.932', 'Shift_JIS'],
+      ['ko_KR.949', 'EUC-KR'],
+      ['ru_RU.1251', 'windows-1251'],
+      ['el_GR.1253', 'windows-1253'],
+      ['tr_TR.1254', 'windows-1254'],
+      ['he_IL.1255', 'windows-1255'],
+      ['ar_SA.1256', 'windows-1256'],
+      ['lt_LT.1257', 'windows-1257'],
+      ['vi_VN.1258', 'windows-1258'],
+      ['th_TH.874', 'windows-874'],
+      ['bn_IN.57003', 'x-iscii-be'],
+      ['ta_IN.57004', 'x-iscii-ta'],
+      ['Russian_Russia.1251@custom', 'windows-1251'],
+      ['Chinese_Hong Kong S.A.R..950', 'Big5'],
+      ['Chinese_Macau S.A.R..UTF8', 'UTF8'],
+      ['.1251', 'windows-1251'],
+      ['.UTF8', 'UTF8'],
+      ['en_US.37', 'IBM037'],
+      ['en_US.037', 'IBM037'],
+      ['en_US.00037', 'IBM037'],
+    ]) {
+      it(`reads the explicit encoding in ${locale} without a subprocess`, () => {
+        process.env.LANG = locale;
+
+        assert.strictEqual(osEncoding(), encoding);
+        assert.strictEqual(commands.length, 0);
+      });
+    }
+
+    for (const [variable, encoding] of [['LC_ALL', 'UTF-8'], ['LC_CTYPE', 'utf8'], ['LANG', 'Utf-8']]) {
+      it(`reads a standalone ${encoding} from ${variable}`, () => {
+        process.env.LANG = 'zh_CN.Big5';
+        process.env[variable] = encoding;
+
+        assert.strictEqual(osEncoding(), encoding);
+        assert.strictEqual(commands.length, 0);
+      });
+    }
+
+    for (const [locale, encoding] of [
+      ['ko_KR.EUC-KR', 'EUC-KR'],
+      ['ru_RU.KOI8-R', 'KOI8-R'],
+      ['ar_SA.ISO-8859-6', 'ISO-8859-6'],
+      ['vi_VN.UTF-8', 'UTF-8'],
+      ['pl_PL.ISO-8859-2', 'ISO-8859-2'],
+    ]) {
+      it(`preserves the named codeset in ${locale}`, () => {
+        process.env.LANG = locale;
+
+        assert.strictEqual(osEncoding(true), encoding);
+        assert.strictEqual(commands.length, 0);
+      });
+    }
+
+    for (const locale of ['en_US.99999', '.99999', 'en_US.710', '.710']) {
+      it(`falls back for an unsupported numeric codeset in ${locale} without using LANG`, () => {
+        process.env.LC_ALL = locale;
+        process.env.LANG = 'zh_CN.Big5';
+
+        assert.strictEqual(osEncoding(true), 'UTF-8');
+        assert.strictEqual(commands.length, 0);
+
+        commandOutput('ISO-8859-1\n');
+        assert.strictEqual(osEncoding(), 'ISO-8859-1');
+        assert.strictEqual(commands.length, 1);
+        assert.strictEqual(commands[0].command, 'locale charmap');
+      });
+    }
+
     it('uses LC_ALL before LC_CTYPE and LANG', () => {
       process.env.LC_ALL = 'ja_JP.Shift_JIS';
       process.env.LC_CTYPE = 'zh_CN.GBK';
@@ -194,7 +266,19 @@ describe('osEncoding', () => {
       Object.defineProperty(process, 'platform', { value: 'win32' });
     });
 
-    for (const [codePage, encoding] of [['936', 'GBK'], ['65001', 'UTF-8'], ['932', 'Shift_JIS'], ['1252', 'windows-1252']]) {
+    for (const [codePage, encoding] of [
+      ['936', 'GBK'],
+      ['65001', 'UTF-8'],
+      ['932', 'Shift_JIS'],
+      ['1252', 'windows-1252'],
+      ['37', 'IBM037'],
+      ['037', 'IBM037'],
+      ['00037', 'IBM037'],
+      ['870', 'IBM870'],
+      ['1047', 'IBM1047'],
+      ['29001', 'x-Europa'],
+      ['50222', 'ISO-2022-JP'],
+    ]) {
       it(`maps console code page ${codePage} to ${encoding}`, () => {
         commandOutput(`Active code page: ${codePage}\r\n`);
 
