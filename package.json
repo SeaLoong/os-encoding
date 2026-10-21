@@ -1,6 +1,6 @@
 {
   "name": "os-encoding",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Detect the locale or Windows console character encoding.",
   "main": "index.js",
   "types": "index.d.ts",
